@@ -9,6 +9,8 @@ A Java Http Client benchmark
 
 ## benchmark
 * httpasynclient
+* Java HttpClient
+* Java conventional HttpUrlConnection
 
 ### run benchmark
 
