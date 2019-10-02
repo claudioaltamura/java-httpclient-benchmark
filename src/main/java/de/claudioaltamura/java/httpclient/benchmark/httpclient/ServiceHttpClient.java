@@ -20,15 +20,23 @@ public class ServiceHttpClient {
 
   public ServiceHttpClient() {
     executor = Executors.newFixedThreadPool(100);
-    client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).executor(executor)
-        .version(Version.HTTP_1_1).build();
+    client =
+        HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(3))
+            .executor(executor)
+            .version(Version.HTTP_1_1)
+            .build();
   }
 
   public CompletableFuture<HttpResponse<String>> send(Message message) {
-    var httpPost = HttpRequest.newBuilder().uri(URI.create(message.getEndpoint()))
-        .header("TTL", String.valueOf(message.getTtl()))
-        .header("Content-Type", "application/octet-stream").header("accept", "application/json")
-        .POST(BodyPublishers.ofByteArray(message.getPayload())).build();
+    var httpPost =
+        HttpRequest.newBuilder()
+            .uri(URI.create(message.getEndpoint()))
+            .header("TTL", String.valueOf(message.getTtl()))
+            .header("Content-Type", "application/octet-stream")
+            .header("accept", "application/json")
+            .POST(BodyPublishers.ofByteArray(message.getPayload()))
+            .build();
 
     return client.sendAsync(httpPost, BodyHandlers.ofString());
   }

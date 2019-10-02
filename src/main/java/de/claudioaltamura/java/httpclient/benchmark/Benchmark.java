@@ -1,5 +1,9 @@
 package de.claudioaltamura.java.httpclient.benchmark;
 
+import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.CloseableHttpAsyncClientFactory;
+import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.ServiceHttpAsyncClient;
+import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.conventional.ServiceConventional;
+import de.claudioaltamura.java.httpclient.benchmark.httpclient.ServiceHttpClient;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +16,6 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
-import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.CloseableHttpAsyncClientFactory;
-import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.ServiceHttpAsyncClient;
-import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.conventional.ServiceConventional;
-import de.claudioaltamura.java.httpclient.benchmark.httpclient.ServiceHttpClient;
 
 public class Benchmark {
 
@@ -45,7 +45,8 @@ public class Benchmark {
       printProgress(i);
       Message message =
           new Message(randomCookieId(), "http://httpbin.org/post", payload.getBytes(), 500);
-      service.sendHttpAsyncClientWithPoolableClientAndFutureCallback(message,
+      service.sendHttpAsyncClientWithPoolableClientAndFutureCallback(
+          message,
           new FutureCallback<HttpResponse>() {
 
             @Override
@@ -97,10 +98,12 @@ public class Benchmark {
     after();
 
     for (CompletableFuture<java.net.http.HttpResponse<String>> result : results)
-      result.thenApply(java.net.http.HttpResponse::statusCode).thenAccept(s -> {
-        if (s != 200)
-          System.out.println("statusCode: " + s);
-      });
+      result
+          .thenApply(java.net.http.HttpResponse::statusCode)
+          .thenAccept(
+              s -> {
+                if (s != 200) System.out.println("statusCode: " + s);
+              });
   }
 
   private void conventionalHttpClientWithExecutorService() throws InterruptedException {

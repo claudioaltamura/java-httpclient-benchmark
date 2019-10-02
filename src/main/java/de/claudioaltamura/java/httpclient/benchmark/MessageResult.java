@@ -28,12 +28,9 @@ public class MessageResult {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
     MessageResult other = (MessageResult) obj;
     return Objects.equals(cookieId, other.cookieId) && statusCode == other.statusCode;
   }
