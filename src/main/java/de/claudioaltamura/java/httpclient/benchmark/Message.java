@@ -48,20 +48,26 @@ public class Message {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
     Message other = (Message) obj;
-    return Objects.equals(cookieId, other.cookieId) && Objects.equals(endpoint, other.endpoint)
-        && Arrays.equals(payload, other.payload) && ttl == other.ttl;
+    return Objects.equals(cookieId, other.cookieId)
+        && Objects.equals(endpoint, other.endpoint)
+        && Arrays.equals(payload, other.payload)
+        && ttl == other.ttl;
   }
 
   @Override
   public String toString() {
-    return "Message [cookieId=" + cookieId + ", endpoint=" + endpoint + ", payload="
-        + Arrays.toString(payload) + ", ttl=" + ttl + "]";
+    return "Message [cookieId="
+        + cookieId
+        + ", endpoint="
+        + endpoint
+        + ", payload="
+        + Arrays.toString(payload)
+        + ", ttl="
+        + ttl
+        + "]";
   }
 }

@@ -28,12 +28,9 @@ public class ThreadResult {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
     ThreadResult other = (ThreadResult) obj;
     return Objects.equals(cookieId, other.cookieId) && statusCode == other.statusCode;
   }
@@ -42,5 +39,4 @@ public class ThreadResult {
   public String toString() {
     return "ThreadResult [statusCode=" + statusCode + ", cookieId=" + cookieId + "]";
   }
-
 }

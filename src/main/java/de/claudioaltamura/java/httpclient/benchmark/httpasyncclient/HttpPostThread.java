@@ -39,5 +39,4 @@ public class HttpPostThread extends Thread {
   public int getStatusCode() {
     return statusCode;
   }
-
 }
