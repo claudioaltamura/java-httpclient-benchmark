@@ -1,16 +1,17 @@
 package de.claudioaltamura.java.httpclient.benchmark;
 
+import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.CloseableHttpAsyncClientFactory;
+import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.ServiceHttpAsyncClient;
+import de.claudioaltamura.java.httpclient.benchmark.httpclient.ServiceHttpClient;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
-import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.CloseableHttpAsyncClientFactory;
-import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.HttpPostThread;
-import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.ServiceHttpAsyncClient;
 
 public class Benchmark {
 
@@ -20,8 +21,11 @@ public class Benchmark {
   public static void main(String[] args)
       throws InterruptedException, ExecutionException, IOException {
     Benchmark benchmark = new Benchmark();
+
     benchmark.httpAsyncClientWithPoolableClientAndFutureCallback();
     benchmark.HttpAsyncClientWithPoolableClientAndThreads();
+    benchmark.httpClientWithExecutorService();
+
     System.exit(0);
   }
 
@@ -32,11 +36,12 @@ public class Benchmark {
         new ServiceHttpAsyncClient(CloseableHttpAsyncClientFactory.createConfigurableClient());
     final CountDownLatch countDown = new CountDownLatch(number);
     for (int i = 0; i < number; i++) {
-      String payload = "hello world " + i;
+      String payload = "helloworld=" + i;
       // printProgress(i);
       Message message =
           new Message(randomCookieId(), "http://httpbin.org/post", payload.getBytes(), 500);
-      service.sendHttpAsyncClientWithPoolableClientAndFutureCallback(message,
+      service.sendHttpAsyncClientWithPoolableClientAndFutureCallback(
+          message,
           new FutureCallback<HttpResponse>() {
 
             @Override
@@ -63,12 +68,32 @@ public class Benchmark {
         new ServiceHttpAsyncClient(CloseableHttpAsyncClientFactory.createConfigurableClient());
     List<Message> messages = new ArrayList<>();
     for (int i = 0; i < number; i++) {
-      String payload = "hello world " + i;
+      String payload = "helloworld=" + i;
       Message message =
           new Message(randomCookieId(), "http://httpbin.org/post", payload.getBytes(), 500);
       messages.add(message);
     }
     service.sendHttpAsyncClientWithPoolableClientAndThreads(messages);
+
+    after();
+  }
+
+  private void httpClientWithExecutorService() {
+    before("httpClientWithExecutorService");
+
+    ServiceHttpClient service = new ServiceHttpClient();
+    for (int i = 0; i < number; i++) {
+      String payload = "helloworld=" + i;
+      Message message =
+          new Message(randomCookieId(), "http://httpbin.org/post", payload.getBytes(), 500);
+      CompletableFuture<java.net.http.HttpResponse<String>> result = service.send(message);
+      result
+          .thenApply(java.net.http.HttpResponse::statusCode)
+          .thenAccept(
+              s -> {
+                if (s != 200) System.out.println("statusCode: " + s);
+              });
+    }
 
     after();
   }
@@ -92,8 +117,7 @@ public class Benchmark {
   }
 
   private void printProgress(int i) {
-    if (i % (number / 10) == 0)
-      System.out.print("\n");
+    if (i % (number / 10) == 0) System.out.print("\n");
     System.out.print(".");
   }
 
@@ -101,4 +125,3 @@ public class Benchmark {
     return RandomStringUtils.random(32, true, true);
   }
 }
-
