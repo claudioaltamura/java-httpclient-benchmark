@@ -1,5 +1,7 @@
 package de.claudioaltamura.java.httpclient.benchmark.httpasyncclient;
 
+import de.claudioaltamura.java.httpclient.benchmark.Message;
+import de.claudioaltamura.java.httpclient.benchmark.MessageResult;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +15,6 @@ import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.message.BasicHeader;
-import de.claudioaltamura.java.httpclient.benchmark.Message;
 
 public class ServiceHttpAsyncClient {
 
@@ -29,7 +30,7 @@ public class ServiceHttpAsyncClient {
     return httpClient.execute(httpPost, HttpClientContext.create(), futureCallback);
   }
 
-  public List<ThreadResult> sendHttpAsyncClientWithPoolableClientAndThreads(List<Message> messages)
+  public List<MessageResult> sendHttpAsyncClientWithPoolableClientAndThreads(List<Message> messages)
       throws InterruptedException {
     HttpPostThread[] threads = new HttpPostThread[messages.size()];
     for (int i = 0; i < threads.length; i++) {
@@ -42,10 +43,10 @@ public class ServiceHttpAsyncClient {
       thread.start();
     }
 
-    List<ThreadResult> threadResults = new ArrayList<>();
+    List<MessageResult> threadResults = new ArrayList<>();
     for (HttpPostThread thread : threads) {
       thread.join();
-      threadResults.add(new ThreadResult(thread.getStatusCode(), thread.getCookieId()));
+      threadResults.add(new MessageResult(thread.getStatusCode(), thread.getCookieId()));
     }
 
     return threadResults;

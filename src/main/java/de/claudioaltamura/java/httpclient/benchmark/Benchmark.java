@@ -1,17 +1,21 @@
 package de.claudioaltamura.java.httpclient.benchmark;
 
-import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.CloseableHttpAsyncClientFactory;
-import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.ServiceHttpAsyncClient;
-import de.claudioaltamura.java.httpclient.benchmark.httpclient.ServiceHttpClient;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
+import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.CloseableHttpAsyncClientFactory;
+import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.ServiceHttpAsyncClient;
+import de.claudioaltamura.java.httpclient.benchmark.httpasyncclient.conventional.ServiceConventional;
+import de.claudioaltamura.java.httpclient.benchmark.httpclient.ServiceHttpClient;
 
 public class Benchmark {
 
@@ -25,6 +29,7 @@ public class Benchmark {
     benchmark.httpAsyncClientWithPoolableClientAndFutureCallback();
     benchmark.HttpAsyncClientWithPoolableClientAndThreads();
     benchmark.httpClientWithExecutorService();
+    benchmark.conventionalHttpClientWithExecutorService();
 
     System.exit(0);
   }
@@ -32,22 +37,19 @@ public class Benchmark {
   private void httpAsyncClientWithPoolableClientAndFutureCallback()
       throws InterruptedException, ExecutionException, IOException {
     before("httpAsyncClientWithPoolableClientAndFutureCallback");
+
     ServiceHttpAsyncClient service =
         new ServiceHttpAsyncClient(CloseableHttpAsyncClientFactory.createConfigurableClient());
-    final CountDownLatch countDown = new CountDownLatch(number);
     for (int i = 0; i < number; i++) {
       String payload = "helloworld=" + i;
-      // printProgress(i);
+      printProgress(i);
       Message message =
           new Message(randomCookieId(), "http://httpbin.org/post", payload.getBytes(), 500);
-      service.sendHttpAsyncClientWithPoolableClientAndFutureCallback(
-          message,
+      service.sendHttpAsyncClientWithPoolableClientAndFutureCallback(message,
           new FutureCallback<HttpResponse>() {
 
             @Override
-            public void completed(HttpResponse result) {
-              countDown.countDown();
-            }
+            public void completed(HttpResponse result) {}
 
             @Override
             public void failed(Exception ex) {}
@@ -56,7 +58,6 @@ public class Benchmark {
             public void cancelled() {}
           });
     }
-    countDown.await();
 
     after();
   }
@@ -64,11 +65,13 @@ public class Benchmark {
   private void HttpAsyncClientWithPoolableClientAndThreads()
       throws InterruptedException, ExecutionException, IOException {
     before("httpAsyncClientWithPoolableClientAndThreads");
+
     ServiceHttpAsyncClient service =
         new ServiceHttpAsyncClient(CloseableHttpAsyncClientFactory.createConfigurableClient());
     List<Message> messages = new ArrayList<>();
     for (int i = 0; i < number; i++) {
       String payload = "helloworld=" + i;
+      printProgress(i);
       Message message =
           new Message(randomCookieId(), "http://httpbin.org/post", payload.getBytes(), 500);
       messages.add(message);
@@ -78,33 +81,67 @@ public class Benchmark {
     after();
   }
 
-  private void httpClientWithExecutorService() {
+  private void httpClientWithExecutorService() throws InterruptedException {
     before("httpClientWithExecutorService");
 
     ServiceHttpClient service = new ServiceHttpClient();
+    List<CompletableFuture<java.net.http.HttpResponse<String>>> results = new ArrayList<>();
     for (int i = 0; i < number; i++) {
       String payload = "helloworld=" + i;
+      printProgress(i);
       Message message =
           new Message(randomCookieId(), "http://httpbin.org/post", payload.getBytes(), 500);
-      CompletableFuture<java.net.http.HttpResponse<String>> result = service.send(message);
-      result
-          .thenApply(java.net.http.HttpResponse::statusCode)
-          .thenAccept(
-              s -> {
-                if (s != 200) System.out.println("statusCode: " + s);
-              });
+      results.add(service.send(message));
     }
 
     after();
+
+    for (CompletableFuture<java.net.http.HttpResponse<String>> result : results)
+      result.thenApply(java.net.http.HttpResponse::statusCode).thenAccept(s -> {
+        if (s != 200)
+          System.out.println("statusCode: " + s);
+      });
   }
 
-  void before(String name) {
+  private void conventionalHttpClientWithExecutorService() throws InterruptedException {
+    before("conventionalHttpClientWithExecutorService");
+
+    ServiceConventional service = new ServiceConventional();
+    List<Future<MessageResult>> messageResults = new ArrayList<>();
+    for (int i = 0; i < number; i++) {
+      String payload = "helloworld=" + i;
+      printProgress(i);
+      Message message =
+          new Message(randomCookieId(), "http://httpbin.org/post", payload.getBytes(), 500);
+      messageResults.add(service.send(message));
+    }
+
+    after();
+
+    for (Future<MessageResult> messageResult : messageResults) {
+      if (messageResult.isDone()) {
+        try {
+          messageResult.get(100, TimeUnit.MILLISECONDS);
+        } catch (final CancellationException e) {
+          e.printStackTrace();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        } catch (ExecutionException e) {
+          e.printStackTrace();
+        } catch (TimeoutException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
+  private void before(String name) {
     System.out.println("\n");
     System.out.println("benchmark: " + name);
     start = System.currentTimeMillis();
   }
 
-  void after() {
+  private void after() {
     long duration = System.currentTimeMillis() - start;
     System.out.println("\n");
     System.out.println("number for request: " + number);
@@ -117,8 +154,9 @@ public class Benchmark {
   }
 
   private void printProgress(int i) {
-    if (i % (number / 10) == 0) System.out.print("\n");
-    System.out.print(".");
+    // if (i % (number / 10) == 0)
+    // System.out.print("\n");
+    // System.out.print(".");
   }
 
   private String randomCookieId() {

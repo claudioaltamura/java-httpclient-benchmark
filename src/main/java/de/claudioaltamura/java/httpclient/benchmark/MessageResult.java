@@ -1,14 +1,14 @@
-package de.claudioaltamura.java.httpclient.benchmark.httpasyncclient;
+package de.claudioaltamura.java.httpclient.benchmark;
 
 import java.util.Objects;
 
-public class ThreadResult {
+public class MessageResult {
 
   private final int statusCode;
 
   private final String cookieId;
 
-  public ThreadResult(int statusCode, String cookieId) {
+  public MessageResult(int statusCode, String cookieId) {
     this.statusCode = statusCode;
     this.cookieId = cookieId;
   }
@@ -28,15 +28,18 @@ public class ThreadResult {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
-    ThreadResult other = (ThreadResult) obj;
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    MessageResult other = (MessageResult) obj;
     return Objects.equals(cookieId, other.cookieId) && statusCode == other.statusCode;
   }
 
   @Override
   public String toString() {
-    return "ThreadResult [statusCode=" + statusCode + ", cookieId=" + cookieId + "]";
+    return "MessageResult [statusCode=" + statusCode + ", cookieId=" + cookieId + "]";
   }
 }
